@@ -131,6 +131,15 @@ export default function LandingPage() {
           <p className="text-gray-500 text-sm leading-relaxed">
             Это структурированный разбор, где ты начинаешь видеть реальность без искажений.
           </p>
+
+          <div className="flex justify-center mt-10">
+            <Link
+              href="/auth/register"
+              className="px-10 py-3 bg-black text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition-colors"
+            >
+              Начать
+            </Link>
+          </div>
         </section>
 
       </main>

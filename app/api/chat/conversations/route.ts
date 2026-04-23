@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
@@ -24,7 +25,8 @@ export async function GET(request: NextRequest) {
     .order("updated_at", { ascending: false });
 
   if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 500 });
+    console.error("Fetch conversations error:", fetchError.message);
+    return NextResponse.json({ error: "Failed to fetch conversations" }, { status: 500 });
   }
 
   return NextResponse.json({ conversations: data });
@@ -46,6 +48,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Rate limit: 20 conversations per hour per user
+  const { allowed } = rateLimit(`conv:${user.id}`, 20, 60 * 60 * 1000);
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   // Ensure user exists in public.users before inserting conversation (FK constraint)
   await supabase.from("users").upsert(
     { id: user.id, email: user.email! },
@@ -64,7 +72,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 500 });
+    console.error("Insert conversation error:", insertError.message);
+    return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 });
   }
 
   return NextResponse.json({ conversation: data });

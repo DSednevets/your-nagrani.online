@@ -132,7 +132,7 @@ export default function ChatInterface({
           </div>
           <div className="max-w-3xl mx-auto mt-1 h-0.5 bg-gray-100 rounded">
             <div
-              className="h-full bg-black rounded transition-all duration-500"
+              className="h-full bg-green-500 rounded transition-all duration-500"
               style={{ width: `${Math.min((realMessageCount / FREE_TRIAL_LIMIT) * 100, 100)}%` }}
             />
           </div>

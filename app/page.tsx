@@ -144,8 +144,8 @@ export default function LandingPage() {
 
       </main>
 
-      <footer className="border-t border-gray-100 py-6 text-center text-sm text-gray-400">
-        © 2025 НАГРАНИ · your-nagrani.online
+      <footer className="border-t border-gray-100 py-6 text-center text-xs text-gray-400">
+        © 2026 НАГРАНИ · your-nagrani.online
       </footer>
     </div>
   );

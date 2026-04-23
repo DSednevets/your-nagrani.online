@@ -31,7 +31,7 @@ export default function MessageList({ messages }: { messages: Message[] }) {
         >
           <div
             className={cn(
-              "max-w-lg px-5 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap",
+              "max-w-2xl px-5 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap",
               msg.role === "user"
                 ? "bg-black text-white rounded-br-sm"
                 : "bg-gray-100 text-gray-900 rounded-bl-sm"

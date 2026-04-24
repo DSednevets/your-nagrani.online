@@ -41,8 +41,12 @@ export default function MessageInput({
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
-  // Text in textarea at the moment recording started — interim results append to this
+  // Text confirmed as final — interim results append to this
   const baseTextRef = useRef("");
+  // True while the user wants recording active (survives engine restarts)
+  const stillListeningRef = useRef(false);
+  // Timer that stops recording after 5 s of silence
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setSpeechSupported(getSpeechRecognition() !== null);
@@ -56,6 +60,11 @@ export default function MessageInput({
   }, [input]);
 
   const stopListening = useCallback(() => {
+    stillListeningRef.current = false;
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
     recognitionRef.current?.stop();
     recognitionRef.current = null;
     setListening(false);
@@ -67,55 +76,70 @@ export default function MessageInput({
 
     setVoiceError("");
     baseTextRef.current = input;
+    stillListeningRef.current = true;
 
-    const recognition = new Ctor();
-    recognition.lang = "ru-RU";
-    recognition.continuous = false;
-    recognition.interimResults = true;
+    // Inner function so it can reschedule itself on engine restart
+    const launchSession = () => {
+      if (!stillListeningRef.current) return;
 
-    recognition.onresult = (e: SpeechRecognitionEvent) => {
-      let interim = "";
-      let final = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const t = e.results[i][0].transcript;
-        if (e.results[i].isFinal) final += t;
-        else interim += t;
-      }
-      // Show interim inline; on final commit
-      if (final) {
-        const next = baseTextRef.current
-          ? `${baseTextRef.current} ${final}`.trimStart()
-          : final;
-        baseTextRef.current = next;
-        setInput(next);
-      } else {
-        const preview = baseTextRef.current
-          ? `${baseTextRef.current} ${interim}`.trimStart()
-          : interim;
-        setInput(preview);
-      }
+      const recognition = new Ctor();
+      recognition.lang = "ru-RU";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (e: SpeechRecognitionEvent) => {
+        // Reset silence countdown on every speech event
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = setTimeout(stopListening, 5000);
+
+        let interim = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const t = e.results[i][0].transcript;
+          if (e.results[i].isFinal) {
+            const sep = baseTextRef.current ? " " : "";
+            baseTextRef.current = (baseTextRef.current + sep + t).trimStart();
+          } else {
+            interim += t;
+          }
+        }
+        setInput(
+          interim
+            ? (baseTextRef.current ? `${baseTextRef.current} ${interim}` : interim).trimStart()
+            : baseTextRef.current
+        );
+      };
+
+      recognition.onerror = (e) => {
+        const err = (e as Event & { error?: string }).error ?? "unknown";
+        if (err === "not-allowed") {
+          setVoiceError("Нет доступа к микрофону — разреши в настройках браузера");
+          stillListeningRef.current = false;
+          setListening(false);
+        } else if (err !== "no-speech" && err !== "aborted") {
+          setVoiceError("Не удалось распознать речь. Попробуй ещё раз");
+          stillListeningRef.current = false;
+          setListening(false);
+        }
+        recognitionRef.current = null;
+      };
+
+      recognition.onend = () => {
+        recognitionRef.current = null;
+        // Engine stopped but user hasn't pressed stop — restart immediately
+        if (stillListeningRef.current) {
+          setTimeout(launchSession, 100);
+        } else {
+          setListening(false);
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
     };
 
-    recognition.onerror = (e) => {
-      const err = (e as Event & { error?: string }).error ?? "unknown";
-      if (err === "not-allowed") {
-        setVoiceError("Нет доступа к микрофону — разреши в настройках браузера");
-      } else if (err !== "no-speech" && err !== "aborted") {
-        setVoiceError("Не удалось распознать речь. Попробуй ещё раз");
-      }
-      setListening(false);
-      recognitionRef.current = null;
-    };
-
-    recognition.onend = () => {
-      setListening(false);
-      recognitionRef.current = null;
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
+    launchSession();
     setListening(true);
-  }, [input]);
+  }, [input, stopListening]);
 
   const toggleListening = () => {
     if (listening) stopListening();
@@ -127,7 +151,11 @@ export default function MessageInput({
     if (disabled && listening) stopListening();
   }, [disabled, listening, stopListening]);
 
-  useEffect(() => () => { recognitionRef.current?.stop(); }, []);
+  useEffect(() => () => {
+    stillListeningRef.current = false;
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    recognitionRef.current?.stop();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

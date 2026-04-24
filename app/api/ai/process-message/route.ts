@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
-import { SYSTEM_PROMPT, FREE_TRIAL_LIMIT } from "@/lib/constants";
+import { SYSTEM_PROMPT, FREE_TRIAL_LIMIT, ADMIN_EMAILS } from "@/lib/constants";
 import { rateLimit } from "@/lib/rate-limit";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -80,8 +80,11 @@ export async function POST(request: NextRequest) {
 
     const actualCount = dbCount ?? 0;
 
+    // Admin emails bypass subscription check entirely
+    const isAdmin = user.email ? ADMIN_EMAILS.includes(user.email) : false;
+
     // Check free trial limit
-    if (actualCount >= FREE_TRIAL_LIMIT) {
+    if (!isAdmin && actualCount >= FREE_TRIAL_LIMIT) {
       const { data: sub } = await supabase
         .from("subscriptions")
         .select("status")

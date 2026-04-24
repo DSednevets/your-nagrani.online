@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { ADMIN_EMAILS } from "@/lib/constants";
 
 export default function ProfilePage() {
   const { user, loading, logout } = useAuth();
   const { status, isPremium } = useSubscription(user?.id);
+  const isAdmin = user?.email ? ADMIN_EMAILS.includes(user.email) : false;
   const router = useRouter();
 
   useEffect(() => {
@@ -42,9 +44,9 @@ export default function ProfilePage() {
             <p className="text-xs text-gray-400 mb-1">Подписка</p>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">
-                {isPremium ? "Premium" : "Бесплатный план"}
+                {isAdmin ? "Admin" : isPremium ? "Premium" : "Бесплатный план"}
               </p>
-              {!isPremium && (
+              {!isPremium && !isAdmin && (
                 <a
                   href="/pricing"
                   className="text-xs px-3 py-1.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
@@ -54,7 +56,7 @@ export default function ProfilePage() {
               )}
             </div>
             <p className="text-xs text-gray-400 mt-1">
-              Статус: {status === "active" ? "Активна" : "Не активна"}
+              {isAdmin ? "Полный доступ ко всем режимам" : `Статус: ${status === "active" ? "Активна" : "Не активна"}`}
             </p>
           </div>
 

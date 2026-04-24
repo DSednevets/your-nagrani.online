@@ -4,10 +4,16 @@ let _supabase: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient {
   if (!_supabase) {
-    _supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!url || !key) {
+      throw new Error(
+        `Supabase env vars missing: NEXT_PUBLIC_SUPABASE_URL=${url ?? "undefined"}, NEXT_PUBLIC_SUPABASE_ANON_KEY=${key ? "[set]" : "undefined"}`
+      );
+    }
+
+    _supabase = createClient(url, key);
   }
   return _supabase;
 }

@@ -138,6 +138,8 @@ export const FREE_TRIAL_LIMIT = 15;
 
 export const ADMIN_EMAILS: string[] = [
   "dsednevets@gmail.com",
+  "sednevetsi@gmail.com",
+  "ddovgopol1997@gmail.com"
 ];
 
 export const SUBSCRIPTION_STATUS = {

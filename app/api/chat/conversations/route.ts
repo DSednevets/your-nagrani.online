@@ -18,6 +18,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Rate limit: 120 requests per hour per user
+  const { allowed } = rateLimit(`conv-list:${user.id}`, 120, 60 * 60 * 1000);
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   const { data, error: fetchError } = await supabase
     .from("conversations")
     .select("*")

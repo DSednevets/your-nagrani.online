@@ -1,6 +1,9 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
+
+# Create non-root user before installing deps
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # Copy package files
 COPY package.json package-lock.json* ./
@@ -13,6 +16,11 @@ COPY . .
 
 # Build Next.js
 RUN npm run build
+
+# Hand ownership to non-root user
+RUN chown -R appuser:appgroup /app
+
+USER appuser
 
 # Expose port
 EXPOSE 3000

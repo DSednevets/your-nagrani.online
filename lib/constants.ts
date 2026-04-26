@@ -136,11 +136,7 @@ export const SYSTEM_PROMPT = `Ты — не коуч и не советчик. �
 
 export const FREE_TRIAL_LIMIT = 15;
 
-export const ADMIN_EMAILS: string[] = [
-  "dsednevets@gmail.com",
-  "sednevetsi@gmail.com",
-  "ddovgopol1997@gmail.com"
-];
+// Admin emails are loaded from ADMIN_EMAILS env var (comma-separated), not hardcoded here.
 
 export const SUBSCRIPTION_STATUS = {
   FREE: "free",

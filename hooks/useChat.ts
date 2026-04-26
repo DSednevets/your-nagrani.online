@@ -53,8 +53,6 @@ export function useChat(conversationId: string) {
         body: JSON.stringify({
           conversation_id: conversationId,
           user_message: content,
-          conversation_history: messages,
-          message_count: messageCount,
         }),
       });
 

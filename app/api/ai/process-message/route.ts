@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
-import { SYSTEM_PROMPT, FREE_TRIAL_LIMIT, ADMIN_EMAILS } from "@/lib/constants";
+import { SYSTEM_PROMPT, FREE_TRIAL_LIMIT } from "@/lib/constants";
 import { rateLimit } from "@/lib/rate-limit";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate input
     const body = await request.json();
-    const { conversation_id, user_message, conversation_history } = body;
+    const { conversation_id, user_message } = body;
 
     if (!conversation_id || !UUID_RE.test(conversation_id)) {
       return NextResponse.json({ error: "Invalid conversation_id" }, { status: 400 });
@@ -80,35 +80,44 @@ export async function POST(request: NextRequest) {
 
     const actualCount = dbCount ?? 0;
 
-    // Admin emails bypass subscription check entirely
-    const isAdmin = user.email ? ADMIN_EMAILS.includes(user.email) : false;
+    // Admin emails from env — never from source code
+    const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim())
+      .filter(Boolean);
+    const isAdmin = user.email ? adminEmails.includes(user.email) : false;
 
     // Check free trial limit
     if (!isAdmin && actualCount >= FREE_TRIAL_LIMIT) {
       const { data: sub } = await supabase
         .from("subscriptions")
-        .select("status")
+        .select("status, current_period_end")
         .eq("user_id", user.id)
         .eq("status", "active")
         .maybeSingle();
 
-      if (!sub) {
+      const hasValidSub =
+        sub &&
+        sub.current_period_end &&
+        new Date(sub.current_period_end) > new Date();
+
+      if (!hasValidSub) {
         return NextResponse.json({ error: "Subscription required" }, { status: 403 });
       }
     }
 
-    // Sanitize conversation history — only allow valid roles and string content
-    const safeHistory: ChatMessage[] = Array.isArray(conversation_history)
-      ? conversation_history
-          .filter(
-            (m) =>
-              m &&
-              (m.role === "user" || m.role === "assistant") &&
-              typeof m.content === "string" &&
-              m.content.length <= 10000
-          )
-          .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }))
-      : [];
+    // Load conversation history from DB — never trust client-supplied history
+    const { data: dbMessages } = await supabase
+      .from("messages")
+      .select("role, content")
+      .eq("conversation_id", conversation_id)
+      .order("created_at", { ascending: true })
+      .limit(50);
+
+    const safeHistory: ChatMessage[] = (dbMessages ?? []).map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content as string,
+    }));
 
     safeHistory.push({ role: "user", content: trimmed });
 

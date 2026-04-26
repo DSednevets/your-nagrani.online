@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
+// Stripe statuses that represent an accessible subscription
+const ACTIVE_STRIPE_STATUSES = new Set<string>(["active", "trialing"]);
+
 export async function POST(request: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
   const body = await request.text();
@@ -59,8 +62,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (sub) {
-      const status =
-        subscription.status === "active" ? "active" : "cancelled";
+      const status = ACTIVE_STRIPE_STATUSES.has(subscription.status)
+        ? "active"
+        : "cancelled";
 
       await supabase
         .from("subscriptions")

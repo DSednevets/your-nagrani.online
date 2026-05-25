@@ -87,8 +87,15 @@ export async function POST(request: NextRequest) {
       .filter(Boolean);
     const isAdmin = user.email ? adminEmails.includes(user.email) : false;
 
+    // Free premium emails from env — gifted access without payment
+    const freePremiumEmails = (process.env.FREE_PREMIUM_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim())
+      .filter(Boolean);
+    const isFreePremium = user.email ? freePremiumEmails.includes(user.email) : false;
+
     // Check free trial limit
-    if (!isAdmin && actualCount >= FREE_TRIAL_LIMIT) {
+    if (!isAdmin && !isFreePremium && actualCount >= FREE_TRIAL_LIMIT) {
       const { data: sub } = await supabase
         .from("subscriptions")
         .select("status, current_period_end")

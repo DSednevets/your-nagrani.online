@@ -21,11 +21,6 @@ export default function LandingPage() {
             и что с этим делать. Без мотивации и пустых советов.
           </p>
 
-          <div className="text-sm text-gray-600 mb-10 space-y-1">
-            <p>Ты уже знаешь часть ответов.</p>
-            <p>Вопрос — готов ли ты их увидеть?</p>
-          </div>
-
           <div className="grid grid-cols-2 gap-4 w-full max-w-md">
             <Link
               href="/auth/register"
@@ -44,16 +39,14 @@ export default function LandingPage() {
 
         {/* Value description */}
         <section className="max-w-xl mx-auto w-full text-center pb-16">
-          <p className="text-base text-gray-700 leading-loose">
-            <span className="font-semibold text-gray-900">Это не чат и не психология.</span>
+          <p className="text-lg text-gray-600 leading-relaxed max-w-lg mx-auto">
+            Здесь ты увидишь то, что обычно ускользает.
             <br />
-            Это разговор, в котором ты начинаешь видеть себя без иллюзий.
+            Где на самом деле уходит твоя энергия.
             <br />
-            Где ты сливаешь энергию.
+            В какой момент ты себя останавливаешь.
             <br />
-            Где сам себя тормозишь.
-            <br />
-            И почему это повторяется.
+            И почему одни и те же сценарии повторяются снова и снова.
           </p>
         </section>
 

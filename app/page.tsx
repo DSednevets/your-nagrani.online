@@ -16,12 +16,12 @@ export default function LandingPage() {
             <span className="text-gray-400">Но почему-то не живёшь даже на 10%</span>
           </h1>
 
-          <p className="text-lg text-gray-600 mb-6 leading-relaxed max-w-lg mx-auto">
+          <p className="text-lg text-gray-600 leading-relaxed max-w-lg mx-auto">
             AI-ассистент помогает разобраться, что тебя на самом деле тормозит
             и что с этим делать. Без мотивации и пустых советов.
           </p>
 
-          <div className="grid grid-cols-2 gap-4 w-full max-w-md">
+          <div className="grid grid-cols-2 gap-4 w-full max-w-md my-10">
             <Link
               href="/auth/register"
               className="text-center px-6 py-3 bg-black text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition-colors"
@@ -35,10 +35,7 @@ export default function LandingPage() {
               Узнать о тарифах
             </Link>
           </div>
-        </section>
 
-        {/* Value description */}
-        <section className="max-w-xl mx-auto w-full text-center pb-16">
           <p className="text-lg text-gray-600 leading-relaxed max-w-lg mx-auto">
             Здесь ты увидишь то, что обычно ускользает.
             <br />
@@ -121,10 +118,6 @@ export default function LandingPage() {
               психотерапия
             </li>
           </ul>
-          <p className="text-gray-500 text-sm leading-relaxed">
-            Это структурированный разбор, где ты начинаешь видеть реальность без искажений.
-          </p>
-
           <div className="flex justify-center mt-10">
             <Link
               href="/auth/register"

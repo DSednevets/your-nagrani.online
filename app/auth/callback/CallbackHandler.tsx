@@ -21,20 +21,15 @@ export default function CallbackHandler() {
         return;
       }
 
-      console.log("Code from URL:", searchParams.get("code"));
-      console.log("URL hash:", window.location.hash);
-
       const code = searchParams.get("code");
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get("access_token");
 
-      console.log("Access token in hash:", accessToken ? "present" : "absent");
+      console.log("Code present:", !!code, "| Token in hash:", !!accessToken);
 
       // Implicit flow — Supabase already created a session, token arrived in hash
       if (accessToken) {
-        console.log("Implicit flow detected, getting session...");
         const { data: sessionData } = await supabase.auth.getSession();
-        console.log("Session received:", sessionData.session?.user?.email);
 
         const user = sessionData.session?.user;
         if (!user) {
@@ -90,8 +85,6 @@ export default function CallbackHandler() {
           await supabase.auth.exchangeCodeForSession(code);
 
         if (exchangeError) throw exchangeError;
-
-        console.log("Session received:", data.session?.user?.email);
 
         const user = data.session?.user;
         if (!user) throw new Error("Не удалось получить данные пользователя");

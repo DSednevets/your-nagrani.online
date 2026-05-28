@@ -21,8 +21,9 @@ function CallbackHandler() {
         return;
       }
 
+      console.log("Code from URL:", searchParams.get("code"));
+
       const code = searchParams.get("code");
-      console.log("Code from URL:", code ? `${code.slice(0, 20)}...` : "MISSING");
       if (!code) {
         router.replace("/auth/login");
         return;
@@ -32,10 +33,9 @@ function CallbackHandler() {
         const { data, error: exchangeError } =
           await supabase.auth.exchangeCodeForSession(code);
 
-        console.log("Session:", data.session);
-        console.log("Exchange error:", exchangeError);
-
         if (exchangeError) throw exchangeError;
+
+        console.log("Session received:", data.session?.user?.email);
 
         const user = data.session?.user;
         if (!user) throw new Error("Не удалось получить данные пользователя");
@@ -54,9 +54,14 @@ function CallbackHandler() {
           .eq("user_id", user.id)
           .limit(1);
 
-        if (existing && existing.length > 0) {
-          console.log("Redirecting to dashboard");
-          router.replace("/dashboard");
+        const redirectPath =
+          existing && existing.length > 0
+            ? "/dashboard"
+            : null;
+
+        if (redirectPath) {
+          console.log("About to redirect to:", redirectPath);
+          router.replace(redirectPath);
           return;
         }
 
@@ -70,14 +75,12 @@ function CallbackHandler() {
         });
 
         const json = await res.json();
-        if (!res.ok || !json.conversation?.id) {
-          console.log("Redirecting to dashboard (no conversation created)");
-          router.replace("/dashboard");
-          return;
-        }
+        const chatPath = res.ok && json.conversation?.id
+          ? `/chat/${json.conversation.id}`
+          : "/dashboard";
 
-        console.log("Redirecting to chat:", json.conversation.id);
-        router.replace(`/chat/${json.conversation.id}`);
+        console.log("About to redirect to:", chatPath);
+        router.replace(chatPath);
       } catch (err: unknown) {
         console.log("Callback error:", err);
         setError(err instanceof Error ? err.message : "Ошибка входа через Google");

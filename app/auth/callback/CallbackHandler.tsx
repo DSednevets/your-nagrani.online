@@ -22,8 +22,64 @@ export default function CallbackHandler() {
       }
 
       console.log("Code from URL:", searchParams.get("code"));
+      console.log("URL hash:", window.location.hash);
 
       const code = searchParams.get("code");
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get("access_token");
+
+      console.log("Access token in hash:", accessToken ? "present" : "absent");
+
+      // Implicit flow — Supabase already created a session, token arrived in hash
+      if (accessToken) {
+        console.log("Implicit flow detected, getting session...");
+        const { data: sessionData } = await supabase.auth.getSession();
+        console.log("Session received:", sessionData.session?.user?.email);
+
+        const user = sessionData.session?.user;
+        if (!user) {
+          router.replace("/auth/login");
+          return;
+        }
+
+        await supabase.from("users").upsert({
+          id: user.id,
+          email: user.email,
+          subscription_status: "free",
+        });
+
+        const { data: existing } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("user_id", user.id)
+          .limit(1);
+
+        const redirectPath =
+          existing && existing.length > 0 ? "/dashboard" : null;
+
+        if (redirectPath) {
+          console.log("About to redirect to:", redirectPath);
+          router.replace(redirectPath);
+          return;
+        }
+
+        const res = await fetch("/api/chat/conversations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionData.session?.access_token}`,
+          },
+        });
+        const json = await res.json();
+        const chatPath =
+          res.ok && json.conversation?.id
+            ? `/chat/${json.conversation.id}`
+            : "/dashboard";
+        console.log("About to redirect to:", chatPath);
+        router.replace(chatPath);
+        return;
+      }
+
       if (!code) {
         router.replace("/auth/login");
         return;

@@ -163,6 +163,21 @@ function LoginForm() {
           {googleLoading ? "Переходим к Google..." : "Войти через Google"}
         </button>
 
+        <button
+          type="button"
+          onClick={() => {
+            supabase.auth.signInWithOAuth({
+              provider: "github",
+              options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+              },
+            });
+          }}
+          className="mt-3 w-full py-2 px-4 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900"
+        >
+          Войти через GitHub
+        </button>
+
         <p className="mt-6 text-center text-sm text-gray-500">
           Нет аккаунта?{" "}
           <Link href="/auth/register" className="text-black font-medium hover:underline">

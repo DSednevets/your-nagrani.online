@@ -82,8 +82,13 @@ function CallbackHandler() {
         console.log("About to redirect to:", chatPath);
         router.replace(chatPath);
       } catch (err: unknown) {
-        console.log("Callback error:", err);
-        setError(err instanceof Error ? err.message : "Ошибка входа через Google");
+        console.error("===== FULL ERROR =====");
+        console.error("Error object:", err);
+        console.error("Error message:", (err as { message?: string })?.message);
+        console.error("Error code:", (err as { code?: string })?.code);
+        console.error("Error details:", JSON.stringify(err, null, 2));
+        const msg = (err as { message?: string })?.message;
+        setError(`❌ Ошибка: ${msg || JSON.stringify(err)}`);
       }
     };
 

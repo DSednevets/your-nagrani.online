@@ -29,15 +29,17 @@ function LoginForm() {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     setError("");
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (oauthError) {
-      setError(oauthError.message);
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (oauthError) throw oauthError;
+      // On success the browser redirects — no need to reset loading
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Ошибка входа через Google");
       setGoogleLoading(false);
     }
-    // On success the browser redirects — no need to reset loading
   };
 
   const handleLogin = async (e: React.FormEvent) => {

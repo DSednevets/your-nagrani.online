@@ -10,15 +10,19 @@ function CallbackHandler() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    console.log("Callback page loaded");
+
     const handle = async () => {
       const errorParam = searchParams.get("error");
       const errorDescription = searchParams.get("error_description");
       if (errorParam) {
+        console.log("OAuth error param:", errorParam, errorDescription);
         setError(errorDescription ?? errorParam);
         return;
       }
 
       const code = searchParams.get("code");
+      console.log("Code from URL:", code ? `${code.slice(0, 20)}...` : "MISSING");
       if (!code) {
         router.replace("/auth/login");
         return;
@@ -27,6 +31,9 @@ function CallbackHandler() {
       try {
         const { data, error: exchangeError } =
           await supabase.auth.exchangeCodeForSession(code);
+
+        console.log("Session:", data.session);
+        console.log("Exchange error:", exchangeError);
 
         if (exchangeError) throw exchangeError;
 
@@ -48,6 +55,7 @@ function CallbackHandler() {
           .limit(1);
 
         if (existing && existing.length > 0) {
+          console.log("Redirecting to dashboard");
           router.replace("/dashboard");
           return;
         }
@@ -63,12 +71,15 @@ function CallbackHandler() {
 
         const json = await res.json();
         if (!res.ok || !json.conversation?.id) {
+          console.log("Redirecting to dashboard (no conversation created)");
           router.replace("/dashboard");
           return;
         }
 
+        console.log("Redirecting to chat:", json.conversation.id);
         router.replace(`/chat/${json.conversation.id}`);
       } catch (err: unknown) {
+        console.log("Callback error:", err);
         setError(err instanceof Error ? err.message : "Ошибка входа через Google");
       }
     };

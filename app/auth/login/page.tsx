@@ -138,7 +138,24 @@ function LoginForm() {
 
         <button
           type="button"
-          onClick={handleGoogleLogin}
+          onClick={async () => {
+            console.log("=== Google button clicked ===");
+            try {
+              console.log("Calling signInWithOAuth...");
+              const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: {
+                  redirectTo: `${window.location.origin}/auth/callback`,
+                },
+              });
+              console.log("OAuth response:", { data, error });
+              if (error) {
+                console.error("OAuth error:", error.message);
+              }
+            } catch (err) {
+              console.error("Exception in OAuth:", err);
+            }
+          }}
           disabled={loading || googleLoading}
           className="mt-4 w-full py-3 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm flex items-center justify-center gap-3"
         >
